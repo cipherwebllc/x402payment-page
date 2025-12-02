@@ -294,18 +294,42 @@
 
                     showStatus(`${walletType}に接続中...`, 'info');
 
-                    // Request account access
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-                    if (!accounts || accounts.length === 0) {
-                        throw new Error('アカウントが見つかりません。MetaMaskのロックを解除してください。');
+                    // Request account access - this will prompt MetaMask
+                    try {
+                        await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    } catch (requestError) {
+                        if (requestError.code === 4001) {
+                            throw new Error('接続がキャンセルされました。');
+                        }
+                        throw requestError;
                     }
 
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
+                    // Initialize provider and signer
+                    provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+
+                    // Get accounts to verify connection
+                    const accounts = await provider.listAccounts();
+                    console.log('Accounts found:', accounts);
+
+                    if (!accounts || accounts.length === 0) {
+                        throw new Error('MetaMaskのアカウントが見つかりません。ウォレットのロックを解除してから再度お試しください。');
+                    }
+
+                    signer = provider.getSigner(accounts[0]);
+
+                    // Verify we can get the address
+                    let address;
+                    try {
+                        address = await signer.getAddress();
+                        console.log('Connected address:', address);
+                    } catch (addrError) {
+                        console.error('Failed to get address:', addrError);
+                        throw new Error('アドレスの取得に失敗しました。MetaMaskを確認してください。');
+                    }
 
                     // Check network
                     const network = await provider.getNetwork();
+                    console.log('Current network:', network);
                     if (network.chainId !== CHAIN_ID) {
                         showStatus('Base Sepoliaネットワークに切り替え中...', 'info');
                         try {
@@ -335,11 +359,15 @@
                         }
 
                         // Re-initialize provider after network switch
-                        provider = new ethers.providers.Web3Provider(window.ethereum);
-                        signer = provider.getSigner();
+                        provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+                        signer = provider.getSigner(accounts[0]);
+
+                        // Get address again after network switch
+                        address = await signer.getAddress();
+                        console.log('Address after network switch:', address);
                     }
 
-                    const address = await signer.getAddress();
+                    // Display connected wallet
                     document.getElementById('walletAddress').textContent = address;
                     document.getElementById('connectedWallet').style.display = 'block';
                     document.getElementById('payBtn').style.display = 'block';
