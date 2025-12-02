@@ -78,7 +78,7 @@ Web3 wallet-connect payment page for X402 payment system.
 ### Smart Contract Addresses (Base Sepolia)
 
 - **USDC Contract:** `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
-- **Receiver Address:** `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb`
+- **Receiver Address:** `0x52d4901142e2b5680027da5eb47c86cb02a3ca81`
 - **Network:** Base Sepolia (Chain ID: 84532)
 
 ### Customization
