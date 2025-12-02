@@ -292,10 +292,28 @@
                         return;
                     }
 
-                    // For MetaMask specifically, try to use window.ethereum.providers
+                    // Detect if multiple wallets are installed
                     let selectedProvider = window.ethereum;
+                    const hasMultipleWallets = window.ethereum && window.ethereum.providers && window.ethereum.providers.length > 1;
 
-                    // If multiple wallets are installed, try to find MetaMask
+                    if (hasMultipleWallets) {
+                        console.log('Multiple wallets detected:', window.ethereum.providers);
+                        showStatus('⚠️ 複数のウォレットが検出されました。MetaMask拡張機能のアイコンをクリックして、手動で接続してください。', 'info');
+
+                        // Show instructions for multiple wallets
+                        const instructions = `
+                            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                                <strong>📌 手順:</strong><br>
+                                1. ブラウザ右上のMetaMaskアイコンをクリック<br>
+                                2. 「接続」をクリック<br>
+                                3. このページを選択して「次へ」<br>
+                                4. 接続後、このページに戻ってください
+                            </div>
+                        `;
+                        document.getElementById('status').innerHTML += instructions;
+                    }
+
+                    // For MetaMask specifically, try to use window.ethereum.providers
                     if (walletType === 'metamask' && window.ethereum.providers) {
                         const metamaskProvider = window.ethereum.providers.find(p => p.isMetaMask);
                         if (metamaskProvider) {
@@ -306,12 +324,16 @@
 
                     showStatus(`${walletType}に接続中...`, 'info');
 
-                    // Request account access - this will prompt MetaMask
+                    // Request account access - this will prompt the wallet
                     try {
                         await selectedProvider.request({ method: 'eth_requestAccounts' });
                     } catch (requestError) {
+                        console.error('Request accounts error:', requestError);
+
                         if (requestError.code === 4001) {
-                            throw new Error('接続がキャンセルされました。');
+                            throw new Error('接続がキャンセルされました。MetaMaskのポップアップで「接続」をクリックしてください。');
+                        } else if (requestError.code === -32002) {
+                            throw new Error('既に接続リクエストが保留中です。ブラウザ右上のMetaMaskアイコンをクリックして承認してください。');
                         }
                         throw requestError;
                     }
