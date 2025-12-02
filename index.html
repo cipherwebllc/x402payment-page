@@ -160,6 +160,12 @@
             border: 1px solid #f5c6cb;
         }
 
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+
         .status.info {
             background: #d1ecf1;
             color: #0c5460;
@@ -276,7 +282,12 @@
 
         function showStatus(message, type = 'info') {
             const statusEl = document.getElementById('status');
-            statusEl.textContent = message;
+            // Use textContent for simple messages, preserve line breaks
+            if (message.includes('\n')) {
+                statusEl.innerHTML = message.replace(/\n/g, '<br>');
+            } else {
+                statusEl.textContent = message;
+            }
             statusEl.className = `status ${type}`;
             statusEl.style.display = 'block';
         }
@@ -292,63 +303,102 @@
                         return;
                     }
 
-                    // Detect if multiple wallets are installed
-                    let selectedProvider = window.ethereum;
-                    const hasMultipleWallets = window.ethereum && window.ethereum.providers && window.ethereum.providers.length > 1;
+                    // Strategy: Try multiple methods to get the correct provider
+                    let selectedProvider = null;
 
-                    if (hasMultipleWallets) {
-                        console.log('Multiple wallets detected:', window.ethereum.providers);
-                        showStatus('⚠️ 複数のウォレットが検出されました。MetaMask拡張機能のアイコンをクリックして、手動で接続してください。', 'info');
+                    console.log('Detecting wallet providers...');
+                    console.log('window.ethereum:', window.ethereum);
+                    console.log('window.ethereum.providers:', window.ethereum?.providers);
 
-                        // Show instructions for multiple wallets
-                        const instructions = `
-                            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 10px;">
-                                <strong>📌 手順:</strong><br>
-                                1. ブラウザ右上のMetaMaskアイコンをクリック<br>
-                                2. 「接続」をクリック<br>
-                                3. このページを選択して「次へ」<br>
-                                4. 接続後、このページに戻ってください
-                            </div>
-                        `;
-                        document.getElementById('status').innerHTML += instructions;
-                    }
+                    if (walletType === 'metamask') {
+                        // Method 1: Check for dedicated MetaMask object (most reliable)
+                        if (window.ethereum && window.ethereum.isMetaMask && !window.ethereum.providers) {
+                            selectedProvider = window.ethereum;
+                            console.log('✅ Method 1: Using window.ethereum (single MetaMask)');
+                        }
+                        // Method 2: Search in providers array
+                        else if (window.ethereum?.providers && Array.isArray(window.ethereum.providers)) {
+                            selectedProvider = window.ethereum.providers.find(p => p.isMetaMask && !p.isTally && !p.isBackpack);
+                            if (selectedProvider) {
+                                console.log('✅ Method 2: Found MetaMask in providers array');
+                            }
+                        }
+                        // Method 3: Fallback to window.ethereum if nothing else works
+                        if (!selectedProvider && window.ethereum) {
+                            selectedProvider = window.ethereum;
+                            console.log('⚠️ Method 3: Using window.ethereum as fallback (may conflict with other wallets)');
 
-                    // For MetaMask specifically, try to use window.ethereum.providers
-                    if (walletType === 'metamask' && window.ethereum.providers) {
-                        const metamaskProvider = window.ethereum.providers.find(p => p.isMetaMask);
-                        if (metamaskProvider) {
-                            selectedProvider = metamaskProvider;
-                            console.log('Using MetaMask provider from providers array');
+                            // Show warning if multiple wallets detected
+                            showStatus('⚠️ 複数のウォレットが検出されました。接続に失敗する場合は、他のウォレット拡張機能を一時的に無効化してください。', 'warning');
+                        }
+                    } else if (walletType === 'rabby') {
+                        if (window.ethereum?.providers) {
+                            selectedProvider = window.ethereum.providers.find(p => p.isRabby);
+                        }
+                        if (!selectedProvider && window.ethereum?.isRabby) {
+                            selectedProvider = window.ethereum;
+                        }
+                    } else if (walletType === 'coinbase') {
+                        if (window.ethereum?.providers) {
+                            selectedProvider = window.ethereum.providers.find(p => p.isCoinbaseWallet);
+                        }
+                        if (!selectedProvider && window.ethereum?.isCoinbaseWallet) {
+                            selectedProvider = window.ethereum;
                         }
                     }
+
+                    if (!selectedProvider) {
+                        throw new Error(`${walletType}が見つかりません。ウォレット拡張機能がインストールされているか確認してください。`);
+                    }
+
+                    console.log('Selected provider:', selectedProvider);
 
                     showStatus(`${walletType}に接続中...`, 'info');
 
                     // Request account access - this will prompt the wallet
+                    let accounts;
                     try {
-                        await selectedProvider.request({ method: 'eth_requestAccounts' });
+                        console.log('Requesting accounts...');
+                        accounts = await selectedProvider.request({ method: 'eth_requestAccounts' });
+                        console.log('Accounts received:', accounts);
                     } catch (requestError) {
                         console.error('Request accounts error:', requestError);
+                        console.error('Error code:', requestError.code);
+                        console.error('Error message:', requestError.message);
 
                         if (requestError.code === 4001) {
-                            throw new Error('接続がキャンセルされました。MetaMaskのポップアップで「接続」をクリックしてください。');
+                            throw new Error(`❌ 接続がキャンセルされました。
+
+📌 対処法:
+1. ブラウザ右上のMetaMaskアイコン（キツネ）をクリック
+2. 保留中のリクエストがあれば承認
+3. このページに戻って再度「接続」ボタンをクリック
+
+💡 それでも解決しない場合:
+- 他のウォレット拡張機能（TallyHo, ZilPay, Backpack等）を一時的に無効化
+- chrome://extensions/ で確認`);
                         } else if (requestError.code === -32002) {
-                            throw new Error('既に接続リクエストが保留中です。ブラウザ右上のMetaMaskアイコンをクリックして承認してください。');
+                            throw new Error(`⏳ 既に接続リクエストが保留中です。
+
+📌 対処法:
+1. ブラウザ右上のMetaMaskアイコンをクリック
+2. 保留中のリクエストを承認またはキャンセル
+3. このページに戻って再試行`);
+                        } else if (requestError.message && requestError.message.includes('Already processing')) {
+                            throw new Error('処理中です。MetaMaskのポップアップを確認してください。');
                         }
-                        throw requestError;
+                        throw new Error(`接続エラー: ${requestError.message || 'Unknown error'}`);
                     }
 
                     // Initialize provider and signer with the selected provider
                     provider = new ethers.providers.Web3Provider(selectedProvider, 'any');
 
-                    // Get accounts to verify connection
-                    const accounts = await provider.listAccounts();
-                    console.log('Accounts found:', accounts);
-
+                    // Verify accounts were received
                     if (!accounts || accounts.length === 0) {
-                        throw new Error('MetaMaskのアカウントが見つかりません。ウォレットのロックを解除してから再度お試しください。');
+                        throw new Error('アカウントが見つかりません。ウォレットのロックを解除してから再度お試しください。');
                     }
 
+                    console.log('Using account:', accounts[0]);
                     signer = provider.getSigner(accounts[0]);
 
                     // Verify we can get the address
