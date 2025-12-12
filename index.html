@@ -1,11 +1,22 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X402 Payment - Base Mainnet</title>
+    <title>X402 Payment - USDC on Base</title>
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,777 +24,589 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text);
             padding: 20px;
         }
 
         .container {
-            background: white;
-            border-radius: 16px;
+            background: var(--bg-card);
+            border-radius: 24px;
             padding: 40px;
-            max-width: 500px;
+            max-width: 480px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
+        .logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo h1 {
             font-size: 28px;
-            text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
+        .plan-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .plan-badge.single {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+        }
+
+        .plan-badge.pro {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+        }
+
+        .amount-display {
             text-align: center;
+            padding: 24px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .amount-display .amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .amount-display .currency {
+            font-size: 20px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        .amount-display .plan-info {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .pro-benefits {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .pro-benefits h3 {
+            color: #f59e0b;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .pro-benefits ul {
+            list-style: none;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .pro-benefits li {
+            padding: 4px 0;
+        }
+
+        .pro-benefits li::before {
+            content: "✅ ";
         }
 
         .info-box {
-            background: #f5f5f5;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
+            padding: 8px 0;
             font-size: 14px;
         }
 
-        .info-row:last-child {
-            margin-bottom: 0;
+        .info-row .label {
+            color: var(--text-muted);
         }
 
-        .label {
-            color: #666;
-            font-weight: 500;
+        .info-row .value {
+            color: var(--text);
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            text-align: right;
+            max-width: 200px;
         }
 
-        .value {
-            color: #333;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-        }
-
-        .wallet-section {
-            margin-top: 30px;
-        }
-
-        .wallet-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .wallet-btn {
-            padding: 16px;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .wallet-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-        }
-
-        .wallet-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-        }
-
-        .wallet-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .pay-btn {
+        .btn {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            padding: 16px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 20px;
-            display: none;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
         }
 
-        .pay-btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
-        .pay-btn:disabled {
-            background: #ccc;
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
             transform: none;
         }
 
         .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 14px;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
             display: none;
         }
 
         .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
         }
 
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
         }
 
-        .status.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffc107;
+        .status.pending {
+            display: block;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
         }
 
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .network-badge {
-            display: inline-block;
-            background: #0052FF;
-            color: white;
-            padding: 4px 12px;
+        .tx-hash {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(16, 185, 129, 0.1);
             border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .connected-wallet {
-            background: #e8f5e9;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
             display: none;
         }
 
-        .connected-wallet .address {
-            font-family: 'Courier New', monospace;
+        .tx-hash.show {
+            display: block;
+        }
+
+        .tx-hash p {
             font-size: 12px;
-            color: #2e7d32;
-            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .tx-hash code {
+            display: block;
+            font-size: 11px;
+            background: var(--bg-dark);
+            padding: 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            color: var(--success);
+        }
+
+        .tx-hash .copy-btn {
+            margin-top: 8px;
+            padding: 8px 16px;
+            font-size: 12px;
+            background: var(--bg-dark);
+            color: var(--text);
+            border: 1px solid var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .tx-hash a {
+            display: inline-block;
+            margin-top: 8px;
+            color: var(--primary);
+            font-size: 12px;
+        }
+
+        .network-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .network-badge::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .instructions {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .instructions h4 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        .instructions ol {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            padding: 4px 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer a {
+            color: var(--primary);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+
+            .amount-display .amount {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
-
 <body>
     <div class="container">
-        <div class="network-badge">🔵 Base Mainnet</div>
-        <h1>💳 Payment Required</h1>
-        <p class="subtitle">0.1 USDC on Base</p>
+        <div class="logo">
+            <h1>💎 X402 Payment</h1>
+        </div>
+
+        <div style="text-align: center;">
+            <span class="network-badge">Base Mainnet</span>
+            <span id="planBadge" class="plan-badge single">単発購入</span>
+        </div>
+
+        <div class="amount-display">
+            <span id="amountValue" class="amount">0.1</span>
+            <span class="currency">USDC</span>
+            <p id="planInfo" class="plan-info">1回分のクレジット</p>
+        </div>
+
+        <div id="proBenefits" class="pro-benefits" style="display: none;">
+            <h3>🌟 Pro会員特典</h3>
+            <ul>
+                <li>30日間 質問し放題</li>
+                <li>無制限アクセス</li>
+                <li>優先サポート</li>
+            </ul>
+        </div>
 
         <div class="info-box">
             <div class="info-row">
-                <span class="label">Amount:</span>
-                <span class="value">0.1 USDC</span>
+                <span class="label">User ID</span>
+                <span id="userId" class="value">-</span>
             </div>
             <div class="info-row">
-                <span class="label">Network:</span>
-                <span class="value">Base Mainnet</span>
+                <span class="label">送金先</span>
+                <span class="value">0x52d4...3ca81</span>
             </div>
             <div class="info-row">
-                <span class="label">User ID:</span>
-                <span class="value" id="userId">Loading...</span>
+                <span class="label">ネットワーク</span>
+                <span class="value">Base (Chain ID: 8453)</span>
             </div>
         </div>
 
-        <div class="wallet-section">
-            <h3 style="margin-bottom: 16px; color: #333; font-size: 18px;">ウォレットを選択</h3>
+        <button id="connectBtn" class="btn btn-primary" onclick="connectWallet()">
+            🦊 MetaMaskに接続
+        </button>
 
-            <div class="wallet-grid">
-                <button class="wallet-btn" onclick="connectWallet('metamask')">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" class="wallet-icon"
-                        alt="MetaMask">
-                    <span class="wallet-name">MetaMask</span>
-                </button>
-
-                <button class="wallet-btn" onclick="connectWallet('walletconnect')">
-                    <img src="data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' rx='8' fill='%233B99FC'/%3E%3Cpath d='M12 16c3.5-3.5 9.2-3.5 12.7 0l.4.4c.2.2.2.5 0 .7l-1.4 1.4c-.1.1-.3.1-.4 0l-.6-.5c-2.5-2.4-6.4-2.4-8.9 0l-.6.6c-.1.1-.3.1-.4 0l-1.4-1.4c-.2-.2-.2-.5 0-.7l.6-.5zm15.7 3l1.2 1.2c.2.2.2.5 0 .7l-5.4 5.4c-.2.2-.5.2-.7 0l-3.8-3.8c0-.1-.1-.1-.2 0l-3.8 3.8c-.2.2-.5.2-.7 0l-5.4-5.4c-.2-.2-.2-.5 0-.7l1.2-1.2c.2-.2.5-.2.7 0l3.8 3.8c.1.1.1.1.2 0l3.8-3.8c.2-.2.5-.2.7 0l3.8 3.8c.1.1.1.1.2 0l3.8-3.8c.2-.2.5-.2.7 0z' fill='white'/%3E%3C/svg%3E"
-                        class="wallet-icon" alt="WalletConnect">
-                    <span class="wallet-name">WalletConnect</span>
-                </button>
-
-                <button class="wallet-btn" onclick="connectWallet('coinbase')">
-                    <img src="data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' rx='8' fill='%230052FF'/%3E%3Cpath d='M20 28c4.4 0 8-3.6 8-8s-3.6-8-8-8-8 3.6-8 8 3.6 8 8 8zm0-12c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm-2 6c0-1.1.9-2 2-2s2 .9 2 2h-4z' fill='white'/%3E%3C/svg%3E"
-                        class="wallet-icon" alt="Coinbase">
-                    <span class="wallet-name">Coinbase</span>
-                </button>
-
-                <button class="wallet-btn" onclick="connectWallet('rabby')">
-                    <img src="data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' rx='8' fill='%237084FF'/%3E%3Cpath d='M20 12c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 13c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z' fill='white'/%3E%3C/svg%3E"
-                        class="wallet-icon" alt="Rabby">
-                    <span class="wallet-name">Rabby</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="connected-wallet" id="connectedWallet">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <span style="font-size: 12px; color: #666;">接続中のウォレット:</span>
-                <button onclick="disconnectWallet()" style="font-size: 11px; padding: 4px 8px; background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; border-radius: 4px; cursor: pointer;">切断</button>
-            </div>
-            <div class="address" id="walletAddress"></div>
-            <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #c8e6c9;">
-                <span style="font-size: 12px; color: #666;">USDC残高:</span>
-                <span id="usdcBalance" style="font-size: 12px; font-weight: 600; color: #2e7d32;">読み込み中...</span>
-            </div>
-        </div>
-
-        <button id="payBtn" class="pay-btn" onclick="sendPayment()">
-            💸 Send 0.1 USDC
+        <button id="payBtn" class="btn btn-success" onclick="sendPayment()" disabled>
+            💳 USDCを送金
         </button>
 
         <div id="status" class="status"></div>
+
+        <div id="txHashBox" class="tx-hash">
+            <p>✅ トランザクション完了！以下のハッシュをチャットに送信してください：</p>
+            <code id="txHashValue"></code>
+            <button class="copy-btn" onclick="copyTxHash()">📋 コピー</button>
+            <br>
+            <a id="basescanLink" href="#" target="_blank">BaseScan で確認 →</a>
+        </div>
+
+        <div class="instructions">
+            <h4>📝 お支払い手順</h4>
+            <ol>
+                <li>MetaMaskに接続</li>
+                <li>Base ネットワークに切り替え（自動）</li>
+                <li>「USDCを送金」をクリック</li>
+                <li>MetaMaskで承認</li>
+                <li>トランザクションハッシュをチャットに送信</li>
+            </ol>
+        </div>
+
+        <div class="footer">
+            <p>Powered by <a href="https://x402.org" target="_blank">x402 Protocol</a></p>
+            <p style="margin-top: 8px;">
+                <a href="https://bridge.base.org" target="_blank">Base にブリッジ</a> |
+                <a href="https://basescan.org" target="_blank">BaseScan</a>
+            </p>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script>
-        // Wait for ethers to load
-        if (typeof ethers === 'undefined') {
-            document.getElementById('status').innerHTML = '<p style="color: red;">❌ Ethers library failed to load. Please refresh the page.</p>';
-        }
-    </script>
-    <script>
-        const RECEIVER_ADDRESS = '0x52d4901142e2b5680027da5eb47c86cb02a3ca81';
-        const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-        const CHAIN_ID = 8453; // Base Mainnet
+        // Configuration
+        const CONFIG = {
+            USDC_ADDRESS: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+            RECEIVER_ADDRESS: '0x52d4901142e2b5680027da5eb47c86cb02a3ca81',
+            BASE_CHAIN_ID: '0x2105', // 8453 in hex
+            BASE_RPC: 'https://mainnet.base.org'
+        };
 
-        let provider = null;
-        let signer = null;
-        let userId = null;
-        let selectedWallet = null;
-        let selectedProvider = null; // Keep reference to the provider for event listeners
-        let isConnecting = false; // Prevent multiple connection attempts
-
-        // Get user ID from URL
+        // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        userId = urlParams.get('user');
-        document.getElementById('userId').textContent = userId || 'Not specified';
+        const userId = urlParams.get('user') || 'unknown';
+        const plan = urlParams.get('plan') || 'single';
+        const amount = parseFloat(urlParams.get('amount')) || (plan === 'pro' ? 5 : 0.1);
 
-        // Setup wallet event listeners
-        function setupWalletEventListeners() {
-            if (!selectedProvider) return;
+        // State
+        let walletConnected = false;
+        let userAddress = null;
 
-            // Remove existing listeners first to prevent duplicates
-            selectedProvider.removeListener?.('accountsChanged', handleAccountsChanged);
-            selectedProvider.removeListener?.('chainChanged', handleChainChanged);
-            selectedProvider.removeListener?.('disconnect', handleDisconnect);
+        // Initialize page
+        function initPage() {
+            document.getElementById('userId').textContent = userId;
+            document.getElementById('amountValue').textContent = amount;
 
-            // Add new listeners
-            selectedProvider.on?.('accountsChanged', handleAccountsChanged);
-            selectedProvider.on?.('chainChanged', handleChainChanged);
-            selectedProvider.on?.('disconnect', handleDisconnect);
-
-            console.log('✅ Wallet event listeners set up');
-        }
-
-        // Handle account changes
-        async function handleAccountsChanged(accounts) {
-            console.log('Accounts changed:', accounts);
-            if (accounts.length === 0) {
-                // User disconnected their wallet
-                handleDisconnect();
+            if (plan === 'pro') {
+                document.getElementById('planBadge').textContent = 'Pro会員';
+                document.getElementById('planBadge').className = 'plan-badge pro';
+                document.getElementById('planInfo').textContent = '30日間 無制限アクセス';
+                document.getElementById('proBenefits').style.display = 'block';
+                document.getElementById('payBtn').textContent = `💳 ${amount} USDC を送金（Pro会員）`;
             } else {
-                // User switched accounts
-                try {
-                    signer = provider.getSigner(accounts[0]);
-                    const address = await signer.getAddress();
-                    document.getElementById('walletAddress').textContent = address;
-                    showStatus(`🔄 アカウントが変更されました: ${address.slice(0, 6)}...${address.slice(-4)}`, 'info');
-                    await updateUSDCBalance();
-                } catch (error) {
-                    console.error('Error handling account change:', error);
-                }
+                document.getElementById('payBtn').textContent = `💳 ${amount} USDC を送金`;
             }
         }
 
-        // Handle chain/network changes
-        async function handleChainChanged(chainId) {
-            console.log('Chain changed:', chainId);
-            const newChainId = parseInt(chainId, 16);
-
-            if (newChainId !== CHAIN_ID) {
-                showStatus(`⚠️ 間違ったネットワークです。Base Mainnetに切り替えてください。`, 'warning');
-                document.getElementById('payBtn').disabled = true;
-            } else {
-                // Reinitialize provider with new chain
-                provider = new ethers.providers.Web3Provider(selectedProvider, 'any');
-                const accounts = await selectedProvider.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    signer = provider.getSigner(accounts[0]);
-                    showStatus(`✅ Base Mainnetに接続されています`, 'success');
-                    document.getElementById('payBtn').disabled = false;
-                    await updateUSDCBalance();
-                }
-            }
+        // Check if MetaMask is installed
+        function isMetaMaskInstalled() {
+            return typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask;
         }
 
-        // Handle wallet disconnect
-        function handleDisconnect(error) {
-            console.log('Wallet disconnected:', error);
-            resetWalletState();
-            showStatus('ウォレットが切断されました。再接続してください。', 'warning');
-        }
-
-        // Reset wallet state (shared by disconnect and manual disconnect)
-        function resetWalletState() {
-            // Remove event listeners before resetting
-            if (selectedProvider) {
-                selectedProvider.removeListener?.('accountsChanged', handleAccountsChanged);
-                selectedProvider.removeListener?.('chainChanged', handleChainChanged);
-                selectedProvider.removeListener?.('disconnect', handleDisconnect);
-            }
-
-            provider = null;
-            signer = null;
-            selectedProvider = null;
-            selectedWallet = null;
-            isConnecting = false;
-
-            document.getElementById('connectedWallet').style.display = 'none';
-            document.getElementById('payBtn').style.display = 'none';
-            document.getElementById('walletAddress').textContent = '';
-            document.getElementById('usdcBalance').textContent = '読み込み中...';
-
-            // Reset pay button style
-            const btn = document.getElementById('payBtn');
-            btn.disabled = false;
-            btn.textContent = '💸 Send 0.1 USDC';
-            btn.style.background = '';
-        }
-
-        // Manual disconnect function
-        function disconnectWallet() {
-            console.log('User requested disconnect');
-            resetWalletState();
-            showStatus('ウォレットを切断しました。', 'info');
-        }
-
-        // Get and display USDC balance
-        async function updateUSDCBalance() {
-            if (!signer || !provider) return;
-
-            try {
-                const usdcContract = new ethers.Contract(
-                    USDC_ADDRESS,
-                    ['function balanceOf(address) view returns (uint256)'],
-                    provider
-                );
-
-                const address = await signer.getAddress();
-                const balance = await usdcContract.balanceOf(address);
-                const formattedBalance = ethers.utils.formatUnits(balance, 6);
-
-                const balanceEl = document.getElementById('usdcBalance');
-                if (balanceEl) {
-                    balanceEl.textContent = `${parseFloat(formattedBalance).toFixed(2)} USDC`;
-                }
-
-                // Check if balance is sufficient
-                if (parseFloat(formattedBalance) < 0.1) {
-                    showStatus(`⚠️ USDC残高が不足しています (${parseFloat(formattedBalance).toFixed(2)} USDC)。0.1 USDC以上が必要です。`, 'warning');
-                }
-
-                return formattedBalance;
-            } catch (error) {
-                console.error('Error getting USDC balance:', error);
-            }
-        }
-
-        // Check if wallet is already connected on page load
-        async function checkExistingConnection() {
-            if (!window.ethereum) return;
-
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    console.log('Found existing connection:', accounts[0]);
-                    // Don't auto-connect, just show a hint
-                    showStatus('💡 前回接続したウォレットが検出されました。ウォレットボタンをクリックして再接続してください。', 'info');
-                }
-            } catch (error) {
-                console.error('Error checking existing connection:', error);
-            }
-        }
-
-        // Run on page load
-        checkExistingConnection();
-
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('status');
-            // Use textContent for simple messages, preserve line breaks
-            if (message.includes('\n')) {
-                statusEl.innerHTML = message.replace(/\n/g, '<br>');
-            } else {
-                statusEl.textContent = message;
-            }
-            statusEl.className = `status ${type}`;
-            statusEl.style.display = 'block';
-        }
-
-        async function connectWallet(walletType) {
-            // Prevent multiple simultaneous connection attempts
-            if (isConnecting) {
-                showStatus('⏳ 接続処理中です。少々お待ちください...', 'info');
+        // Connect wallet
+        async function connectWallet() {
+            if (!isMetaMaskInstalled()) {
+                showStatus('MetaMask をインストールしてください', 'error');
+                window.open('https://metamask.io/download/', '_blank');
                 return;
             }
 
-            selectedWallet = walletType;
-            isConnecting = true;
-
             try {
-                if (walletType === 'metamask' || walletType === 'rabby' || walletType === 'coinbase') {
-                    // Injected wallet providers
-                    if (!window.ethereum) {
-                        showStatus('ウォレットがインストールされていません。MetaMask, Rabby, Coinbase Walletのいずれかをインストールしてください。', 'error');
-                        isConnecting = false;
-                        return;
-                    }
+                showStatus('ウォレットに接続中...', 'pending');
 
-                    // Strategy: Try multiple methods to get the correct provider
-                    let detectedProvider = null;
+                // Request account access
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
 
-                    console.log('Detecting wallet providers...');
-                    console.log('window.ethereum:', window.ethereum);
-                    console.log('window.ethereum.providers:', window.ethereum?.providers);
+                userAddress = accounts[0];
+                walletConnected = true;
 
-                    if (walletType === 'metamask') {
-                        // Method 1: Check for dedicated MetaMask object (most reliable)
-                        if (window.ethereum && window.ethereum.isMetaMask && !window.ethereum.providers) {
-                            detectedProvider = window.ethereum;
-                            console.log('✅ Method 1: Using window.ethereum (single MetaMask)');
-                        }
-                        // Method 2: Search in providers array
-                        else if (window.ethereum?.providers && Array.isArray(window.ethereum.providers)) {
-                            detectedProvider = window.ethereum.providers.find(p => p.isMetaMask && !p.isTally && !p.isBackpack);
-                            if (detectedProvider) {
-                                console.log('✅ Method 2: Found MetaMask in providers array');
-                            }
-                        }
-                        // Method 3: Fallback to window.ethereum if nothing else works
-                        if (!detectedProvider && window.ethereum) {
-                            detectedProvider = window.ethereum;
-                            console.log('⚠️ Method 3: Using window.ethereum as fallback (may conflict with other wallets)');
+                // Switch to Base network
+                await switchToBase();
 
-                            // Show warning if multiple wallets detected
-                            if (window.ethereum.providers && window.ethereum.providers.length > 1) {
-                                showStatus('⚠️ 複数のウォレットが検出されました。接続に失敗する場合は、他のウォレット拡張機能を一時的に無効化してください。', 'warning');
-                            }
-                        }
-                    } else if (walletType === 'rabby') {
-                        if (window.ethereum?.providers) {
-                            detectedProvider = window.ethereum.providers.find(p => p.isRabby);
-                        }
-                        if (!detectedProvider && window.ethereum?.isRabby) {
-                            detectedProvider = window.ethereum;
-                        }
-                    } else if (walletType === 'coinbase') {
-                        if (window.ethereum?.providers) {
-                            detectedProvider = window.ethereum.providers.find(p => p.isCoinbaseWallet);
-                        }
-                        if (!detectedProvider && window.ethereum?.isCoinbaseWallet) {
-                            detectedProvider = window.ethereum;
-                        }
-                    }
+                document.getElementById('connectBtn').textContent = `✅ ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('payBtn').disabled = false;
 
-                    if (!detectedProvider) {
-                        throw new Error(`${walletType}が見つかりません。ウォレット拡張機能がインストールされているか確認してください。`);
-                    }
-
-                    // Store provider globally for event listeners
-                    selectedProvider = detectedProvider;
-                    console.log('Selected provider:', selectedProvider);
-
-                    showStatus(`${walletType}に接続中...`, 'info');
-
-                    // Request account access - this will prompt the wallet
-                    let accounts;
-                    try {
-                        console.log('Requesting accounts...');
-                        accounts = await selectedProvider.request({ method: 'eth_requestAccounts' });
-                        console.log('Accounts received:', accounts);
-                    } catch (requestError) {
-                        console.error('Request accounts error:', requestError);
-                        console.error('Error code:', requestError.code);
-                        console.error('Error message:', requestError.message);
-
-                        if (requestError.code === 4001) {
-                            throw new Error(`❌ 接続がキャンセルされました。
-
-📌 対処法:
-1. ブラウザ右上のMetaMaskアイコン（キツネ）をクリック
-2. 保留中のリクエストがあれば承認
-3. このページに戻って再度「接続」ボタンをクリック
-
-💡 それでも解決しない場合:
-- 他のウォレット拡張機能（TallyHo, ZilPay, Backpack等）を一時的に無効化
-- chrome://extensions/ で確認`);
-                        } else if (requestError.code === -32002) {
-                            throw new Error(`⏳ 既に接続リクエストが保留中です。
-
-📌 対処法:
-1. ブラウザ右上のMetaMaskアイコンをクリック
-2. 保留中のリクエストを承認またはキャンセル
-3. このページに戻って再試行`);
-                        } else if (requestError.message && requestError.message.includes('Already processing')) {
-                            throw new Error('処理中です。MetaMaskのポップアップを確認してください。');
-                        }
-                        throw new Error(`接続エラー: ${requestError.message || 'Unknown error'}`);
-                    }
-
-                    // Initialize provider and signer with the selected provider
-                    provider = new ethers.providers.Web3Provider(selectedProvider, 'any');
-
-                    // Verify accounts were received
-                    if (!accounts || accounts.length === 0) {
-                        throw new Error('アカウントが見つかりません。ウォレットのロックを解除してから再度お試しください。');
-                    }
-
-                    console.log('Using account:', accounts[0]);
-                    signer = provider.getSigner(accounts[0]);
-
-                    // Verify we can get the address
-                    let address;
-                    try {
-                        address = await signer.getAddress();
-                        console.log('Connected address:', address);
-                    } catch (addrError) {
-                        console.error('Failed to get address:', addrError);
-                        throw new Error('アドレスの取得に失敗しました。MetaMaskを確認してください。');
-                    }
-
-                    // Check network
-                    const network = await provider.getNetwork();
-                    console.log('Current network:', network);
-                    if (network.chainId !== CHAIN_ID) {
-                        showStatus('Base Mainnetネットワークに切り替え中...', 'info');
-                        try {
-                            await selectedProvider.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x2105' }],
-                            });
-                        } catch (switchError) {
-                            if (switchError.code === 4902) {
-                                await selectedProvider.request({
-                                    method: 'wallet_addEthereumChain',
-                                    params: [{
-                                        chainId: '0x2105',
-                                        chainName: 'Base',
-                                        nativeCurrency: {
-                                            name: 'Ethereum',
-                                            symbol: 'ETH',
-                                            decimals: 18
-                                        },
-                                        rpcUrls: ['https://mainnet.base.org'],
-                                        blockExplorerUrls: ['https://basescan.org']
-                                    }]
-                                });
-                            } else {
-                                throw switchError;
-                            }
-                        }
-
-                        // Re-initialize provider after network switch
-                        provider = new ethers.providers.Web3Provider(selectedProvider, 'any');
-                        signer = provider.getSigner(accounts[0]);
-
-                        // Get address again after network switch
-                        address = await signer.getAddress();
-                        console.log('Address after network switch:', address);
-                    }
-
-                    // Display connected wallet
-                    document.getElementById('walletAddress').textContent = address;
-                    document.getElementById('connectedWallet').style.display = 'block';
-                    document.getElementById('payBtn').style.display = 'block';
-
-                    // Setup event listeners for wallet events
-                    setupWalletEventListeners();
-
-                    showStatus(`✅ ${walletType}に接続しました: ${address.slice(0, 6)}...${address.slice(-4)}`, 'success');
-
-                    // Update USDC balance after successful connection
-                    await updateUSDCBalance();
-
-                } else if (walletType === 'walletconnect') {
-                    showStatus('WalletConnectは現在開発中です。MetaMask, Rabby, Coinbaseをご利用ください。', 'info');
-                }
-
-                isConnecting = false;
+                showStatus('接続完了！送金ボタンをクリックしてください', 'success');
 
             } catch (error) {
-                console.error(error);
-                isConnecting = false;
-
-                // User-friendly error messages
-                let errorMsg = error.message;
-
-                if (error.message.includes('at least one account')) {
-                    errorMsg = 'ウォレットのアカウントがロックされています。ウォレットを開いてロックを解除してください。';
-                } else if (error.code === 4001 || error.message.includes('User rejected')) {
-                    errorMsg = '接続がキャンセルされました。もう一度お試しください。';
-                } else if (error.code === -32002) {
-                    errorMsg = 'ウォレットで既に接続リクエストが保留中です。ウォレットを開いて承認してください。';
-                } else if (error.message.includes('User closed modal')) {
-                    errorMsg = '接続がキャンセルされました。もう一度お試しください。';
-                }
-
-                showStatus(`❌ ${errorMsg}`, 'error');
+                console.error('Connection error:', error);
+                showStatus(`接続エラー: ${error.message}`, 'error');
             }
         }
 
-        async function sendPayment() {
-            const btn = document.getElementById('payBtn');
-
+        // Switch to Base network
+        async function switchToBase() {
             try {
-                // Verify wallet is still connected
-                if (!signer || !provider || !selectedProvider) {
-                    showStatus('❌ ウォレットが接続されていません。再接続してください。', 'error');
-                    return;
-                }
-
-                btn.disabled = true;
-                btn.textContent = 'Processing...';
-
-                showStatus('トランザクション準備中...', 'info');
-
-                // Verify we're on the correct network
-                const network = await provider.getNetwork();
-                if (network.chainId !== CHAIN_ID) {
-                    showStatus('❌ 間違ったネットワークです。Base Mainnetに切り替えてください。', 'error');
-                    btn.disabled = false;
-                    btn.textContent = '💸 Send 0.1 USDC';
-                    return;
-                }
-
-                // Check USDC balance before attempting transfer
-                const usdcContract = new ethers.Contract(
-                    USDC_ADDRESS,
-                    [
-                        'function transfer(address to, uint256 amount) returns (bool)',
-                        'function balanceOf(address) view returns (uint256)',
-                        'function allowance(address owner, address spender) view returns (uint256)'
-                    ],
-                    signer
-                );
-
-                const address = await signer.getAddress();
-                const balance = await usdcContract.balanceOf(address);
-                const amount = ethers.utils.parseUnits('0.1', 6);
-
-                if (balance.lt(amount)) {
-                    const formattedBalance = ethers.utils.formatUnits(balance, 6);
-                    showStatus(`❌ USDC残高が不足しています。\n残高: ${parseFloat(formattedBalance).toFixed(2)} USDC\n必要: 0.1 USDC`, 'error');
-                    btn.disabled = false;
-                    btn.textContent = '💸 Send 0.1 USDC';
-                    return;
-                }
-
-                showStatus('ウォレットで確認してください...', 'info');
-
-                // Estimate gas to catch potential errors early
-                try {
-                    await usdcContract.estimateGas.transfer(RECEIVER_ADDRESS, amount);
-                } catch (gasError) {
-                    console.error('Gas estimation failed:', gasError);
-                    if (gasError.message.includes('insufficient funds')) {
-                        showStatus('❌ ガス代（ETH）が不足しています。Base MainnetのETHを取得してください。', 'error');
-                        btn.disabled = false;
-                        btn.textContent = '💸 Send 0.1 USDC';
-                        return;
-                    }
-                    // Continue anyway, let the actual transaction fail if needed
-                }
-
-                const tx = await usdcContract.transfer(RECEIVER_ADDRESS, amount);
-
-                showStatus(`トランザクション送信完了！確認待ち...\nTx: ${tx.hash.slice(0, 10)}...`, 'info');
-
-                // Wait for confirmation with timeout
-                const receipt = await Promise.race([
-                    tx.wait(),
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error('Transaction timeout')), 120000)
-                    )
-                ]);
-
-                if (receipt.status === 1) {
-                    showStatus(`✅ 支払い成功！\nTransaction: ${receipt.transactionHash}`, 'success');
-                    btn.textContent = '✅ Payment Complete';
-                    btn.style.background = '#28a745';
-
-                    // Update balance after successful payment
-                    await updateUSDCBalance();
-
-                    setTimeout(() => {
-                        showStatus('Discordに戻って「支払いました」と送信してください！', 'success');
-                    }, 2000);
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: CONFIG.BASE_CHAIN_ID }]
+                });
+            } catch (switchError) {
+                // Chain not added, add it
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: CONFIG.BASE_CHAIN_ID,
+                            chainName: 'Base',
+                            nativeCurrency: {
+                                name: 'Ethereum',
+                                symbol: 'ETH',
+                                decimals: 18
+                            },
+                            rpcUrls: [CONFIG.BASE_RPC],
+                            blockExplorerUrls: ['https://basescan.org']
+                        }]
+                    });
                 } else {
-                    throw new Error('Transaction failed');
+                    throw switchError;
                 }
-
-            } catch (error) {
-                console.error('Payment error:', error);
-
-                let errorMsg = '支払いエラー';
-
-                if (error.code === 4001 || error.message.includes('User rejected') || error.message.includes('user rejected')) {
-                    errorMsg = 'トランザクションがキャンセルされました。';
-                } else if (error.message.includes('insufficient funds')) {
-                    errorMsg = 'ガス代（ETH）が不足しています。Base MainnetのETHを取得してください。';
-                } else if (error.message.includes('Transaction timeout')) {
-                    errorMsg = 'トランザクションがタイムアウトしました。ネットワークの状況を確認してください。';
-                } else if (error.message.includes('nonce')) {
-                    errorMsg = 'トランザクションのnonce問題が発生しました。ウォレットをリセットするか、保留中のトランザクションを確認してください。';
-                } else if (error.message.includes('replacement fee too low')) {
-                    errorMsg = '保留中のトランザクションがあります。完了するまでお待ちください。';
-                } else if (error.message) {
-                    errorMsg = `支払いエラー: ${error.message.slice(0, 100)}`;
-                }
-
-                showStatus(`❌ ${errorMsg}`, 'error');
-
-                btn.disabled = false;
-                btn.textContent = '💸 Send 0.1 USDC';
-                btn.style.background = '';
             }
         }
+
+        // Send USDC payment
+        async function sendPayment() {
+            if (!walletConnected) {
+                showStatus('先にウォレットを接続してください', 'error');
+                return;
+            }
+
+            try {
+                showStatus('トランザクションを送信中...', 'pending');
+                document.getElementById('payBtn').disabled = true;
+
+                // USDC has 6 decimals
+                const amountInWei = BigInt(Math.floor(amount * 1e6)).toString(16);
+                const paddedAmount = amountInWei.padStart(64, '0');
+                const paddedReceiver = CONFIG.RECEIVER_ADDRESS.slice(2).padStart(64, '0');
+
+                // ERC20 transfer function signature: transfer(address,uint256)
+                const data = `0xa9059cbb${paddedReceiver}${paddedAmount}`;
+
+                const txHash = await window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [{
+                        from: userAddress,
+                        to: CONFIG.USDC_ADDRESS,
+                        data: data,
+                        gas: '0x186A0' // 100000 gas
+                    }]
+                });
+
+                showStatus('✅ トランザクション送信完了！', 'success');
+                showTxHash(txHash);
+
+            } catch (error) {
+                console.error('Transaction error:', error);
+                showStatus(`送金エラー: ${error.message}`, 'error');
+                document.getElementById('payBtn').disabled = false;
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Show transaction hash
+        function showTxHash(hash) {
+            const txHashBox = document.getElementById('txHashBox');
+            const txHashValue = document.getElementById('txHashValue');
+            const basescanLink = document.getElementById('basescanLink');
+
+            txHashValue.textContent = hash;
+            basescanLink.href = `https://basescan.org/tx/${hash}`;
+            txHashBox.className = 'tx-hash show';
+        }
+
+        // Copy transaction hash
+        function copyTxHash() {
+            const hash = document.getElementById('txHashValue').textContent;
+            navigator.clipboard.writeText(hash).then(() => {
+                showStatus('📋 コピーしました！チャットに貼り付けてください', 'success');
+            });
+        }
+
+        // Handle account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    walletConnected = false;
+                    userAddress = null;
+                    document.getElementById('connectBtn').textContent = '🦊 MetaMaskに接続';
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('payBtn').disabled = true;
+                } else {
+                    userAddress = accounts[0];
+                    document.getElementById('connectBtn').textContent = `✅ ${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                }
+            });
+
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+
+        // Initialize on load
+        initPage();
     </script>
 </body>
-
 </html>
